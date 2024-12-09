@@ -1,0 +1,50 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background: #f4f4f4;
+  color: #333;
+}
+
+.game-container {
+  margin: 2rem auto;
+  width: 300px;
+  text-align: center;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.game-container h2 {
+  margin-bottom: 1rem;
+}
+
+#scrambled-word {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.feedback-correct {
+  margin-top: 1rem;
+  font-weight: bold;
+  color: green;
+}
+
+.feedback-incorrect {
+  margin-top: 1rem;
+  font-weight: bold;
+  color: red;
+}

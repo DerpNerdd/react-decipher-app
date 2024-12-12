@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { skipPuzzle, giveHint } from './puzzleActions';
 
 function generateKey(numCols) {
     const arr = [...Array(numCols).keys()].map(x => x + 1);
@@ -72,6 +73,10 @@ const Game = () => {
     const [numRows, setNumRows] = useState(0);
     const [gridGuess, setGridGuess] = useState([]);
 
+    const [hintsLeft, setHintsLeft] = useState(3);
+    const [hintMessages, setHintMessages] = useState([]);
+    const [usedHintPositions, setUsedHintPositions] = useState(new Set());
+
     useEffect(() => {
         const handleResize = () => {
             setIsDesktop(window.innerWidth > 768);
@@ -121,6 +126,9 @@ const Game = () => {
         setCheckedGuess([]);
         setPuzzleSolved(false);
         puzzleStartTimeRef.current = Date.now();
+        setHintsLeft(3);
+        setHintMessages([]);
+        setUsedHintPositions(new Set());
 
         const rows = Math.ceil(length / cols);
         setNumCols(cols);
@@ -194,6 +202,45 @@ const Game = () => {
         }
     };
 
+    const handleSkip = () => {
+        if (timeLeft <= 0 || gameOver || puzzleSolved) return;
+        skipPuzzle(setLevel, startNewPuzzle, setPuzzleSolved, setFeedback);
+    };
+
+    const handleHint = () => {
+        if (timeLeft <= 0 || gameOver || puzzleSolved) return;
+        if (hintsLeft > 0) {
+            const result = giveHint(originalWord, guess, usedHintPositions);
+            if (result === null) {
+                // No more letters to reveal
+                setFeedback("No more letters to reveal.");
+                return;
+            }
+
+            const { position, char, index } = result;
+            const newMessage = `${ordinal(position)} letter is ${char}`;
+            setHintMessages(prev => [...prev, newMessage]);
+
+            // Mark this position as used
+            setUsedHintPositions(prev => {
+                const newSet = new Set(prev);
+                newSet.add(index);
+                return newSet;
+            });
+
+            setHintsLeft(h => h - 1);
+            setFeedback("Hint used!");
+        } else {
+            setFeedback("No hints left!");
+        }
+    };
+
+    function ordinal(num) {
+        const suffixes = ["th","st","nd","rd"];
+        const val = num % 100;
+        return val + (suffixes[(val - 20) % 10] || suffixes[val] || suffixes[0]);
+    }
+
     const timePercentage = (timeLeft / TOTAL_TIME) * 100;
 
     const handleGridChange = (r, c, value) => {
@@ -205,9 +252,6 @@ const Game = () => {
         });
     };
 
-    // Adjusted spacing:
-    // gap: 8px between cells
-    // gridWidth = numCols * cellWidth + (numCols - 1) * gap
     const cellSize = 40;
     const gapSize = 8;
     const gridWidth = numCols > 0 ? (numCols * cellSize) + ((numCols - 1) * gapSize) : 0;
@@ -254,6 +298,7 @@ const Game = () => {
                             borderRadius: '5px',
                             textAlign: 'center'
                         }}>
+                            <p style={{marginBottom: '0.5rem', fontWeight: 'bold'}}>Scratch Pad</p>
                             <div style={{
                                 display: 'grid',
                                 gridTemplateColumns: `repeat(${numCols}, ${cellSize}px)`,
@@ -292,8 +337,23 @@ const Game = () => {
                             disabled={timeLeft <= 0 || gameOver || puzzleSolved}
                         />
                         <br />
-                        <button onClick={handleSubmit} disabled={timeLeft <= 0 || gameOver || puzzleSolved} style={{ padding: '0.5rem 1rem', fontSize: '1rem' }}>
+                        <button 
+                            onClick={handleSubmit} 
+                            disabled={timeLeft <= 0 || gameOver || puzzleSolved} 
+                            style={{ padding: '0.5rem 1rem', fontSize: '1rem', marginRight: '5px' }}>
                             Submit
+                        </button>
+                        <button 
+                            onClick={handleSkip} 
+                            disabled={timeLeft <= 0 || gameOver || puzzleSolved} 
+                            style={{ padding: '0.5rem 1rem', fontSize: '1rem', marginRight: '5px' }}>
+                            Skip
+                        </button>
+                        <button 
+                            onClick={handleHint} 
+                            disabled={timeLeft <= 0 || gameOver || puzzleSolved || hintsLeft <= 0} 
+                            style={{ padding: '0.5rem 1rem', fontSize: '1rem' }}>
+                            Hint ({hintsLeft})
                         </button>
                     </div>
 
@@ -317,6 +377,17 @@ const Game = () => {
                                 }}>
                                     {item.char}
                                 </span>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Display hint messages (accumulate) */}
+                    {hintMessages.length > 0 && (
+                        <div style={{ marginTop: '1rem' }}>
+                            {hintMessages.map((msg, idx) => (
+                                <p key={idx} style={{margin: '5px 0', fontStyle: 'italic'}}>
+                                    {msg}
+                                </p>
                             ))}
                         </div>
                     )}

@@ -24,7 +24,6 @@ function transpositionCipher(phrase, key) {
         }
     }
 
-    // Read columns in order of key
     const zeroBasedKey = key.map(k => k - 1);
     let cipher = '';
     zeroBasedKey.forEach(k => {
@@ -62,10 +61,24 @@ const Game = () => {
     const [score, setScore] = useState(0);
     const [puzzlesCompleted, setPuzzlesCompleted] = useState(0);
     const [gameOver, setGameOver] = useState(false);
-    const [puzzleSolved, setPuzzleSolved] = useState(false); // NEW: track if current puzzle is solved
+    const [puzzleSolved, setPuzzleSolved] = useState(false);
+
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
     const timerRef = useRef(null);
     const puzzleStartTimeRef = useRef(null);
+
+    const [numCols, setNumCols] = useState(0);
+    const [numRows, setNumRows] = useState(0);
+    const [gridGuess, setGridGuess] = useState([]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsDesktop(window.innerWidth > 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         startNewPuzzle();
@@ -93,21 +106,28 @@ const Game = () => {
         setOriginalWord(word);
 
         const length = word.replace(/\s+/g, '').length;
-        let numCols;
-        if (length <= 4) numCols = 2;
-        else if (length <= 8) numCols = 3;
-        else if (length <= 12) numCols = 4;
-        else numCols = 5;
+        let cols;
+        if (length <= 4) cols = 2;
+        else if (length <= 8) cols = 3;
+        else if (length <= 12) cols = 4;
+        else cols = 5;
 
-        const newKey = generateKey(numCols);
+        const newKey = generateKey(cols);
         setKey(newKey);
         const cipherText = transpositionCipher(word, newKey);
         setScrambledWord(cipherText);
         setGuess('');
         setFeedback('');
         setCheckedGuess([]);
-        setPuzzleSolved(false); // Reset puzzle solved status
+        setPuzzleSolved(false);
         puzzleStartTimeRef.current = Date.now();
+
+        const rows = Math.ceil(length / cols);
+        setNumCols(cols);
+        setNumRows(rows);
+
+        const newGrid = Array.from({length: rows}, () => Array(cols).fill(''));
+        setGridGuess(newGrid);
     };
 
     const calculateScoreForPuzzle = (elapsedSeconds, wordLength, numCols) => {
@@ -121,16 +141,16 @@ const Game = () => {
     };
 
     const handleSubmit = () => {
-        if (timeLeft <= 0 || gameOver || puzzleSolved) return; // Ignore if game over, time out, or puzzle already solved
+        if (timeLeft <= 0 || gameOver || puzzleSolved) return;
 
         const cleanedOriginal = originalWord.replace(/\s+/g, '').toUpperCase();
-        const cleanedGuess = guess.trim().toUpperCase();
+        const finalGuess = guess.trim().toUpperCase();
 
         let letterFeedback = [];
-        const maxLen = Math.max(cleanedOriginal.length, cleanedGuess.length);
+        const maxLen = Math.max(cleanedOriginal.length, finalGuess.length);
         for (let i = 0; i < maxLen; i++) {
             const originalChar = cleanedOriginal[i] || '';
-            const guessChar = cleanedGuess[i] || ' ';
+            const guessChar = finalGuess[i] || ' ';
             letterFeedback.push({
                 char: guessChar,
                 correct: guessChar === originalChar
@@ -138,9 +158,9 @@ const Game = () => {
         }
         setCheckedGuess(letterFeedback);
 
-        if (cleanedGuess === cleanedOriginal) {
+        if (finalGuess === cleanedOriginal) {
             setFeedback('Correct!');
-            setPuzzleSolved(true); // Mark this puzzle as solved
+            setPuzzleSolved(true);
             const elapsedMs = Date.now() - puzzleStartTimeRef.current;
             const elapsedSeconds = Math.floor(elapsedMs / 1000);
             const puzzleScore = calculateScoreForPuzzle(elapsedSeconds, cleanedOriginal.length, key.length);
@@ -176,6 +196,22 @@ const Game = () => {
 
     const timePercentage = (timeLeft / TOTAL_TIME) * 100;
 
+    const handleGridChange = (r, c, value) => {
+        const upperVal = value.toUpperCase().slice(0,1).replace(/[^A-Z]/g,''); 
+        setGridGuess(prev => {
+            const newGrid = prev.map(row => [...row]);
+            newGrid[r][c] = upperVal;
+            return newGrid;
+        });
+    };
+
+    // Adjusted spacing:
+    // gap: 8px between cells
+    // gridWidth = numCols * cellWidth + (numCols - 1) * gap
+    const cellSize = 40;
+    const gapSize = 8;
+    const gridWidth = numCols > 0 ? (numCols * cellSize) + ((numCols - 1) * gapSize) : 0;
+
     return (
         <div className="game-container" style={{ padding: '2rem', textAlign: 'center' }}>
             {!gameOver && (
@@ -208,18 +244,58 @@ const Game = () => {
                     <p>Score: {score}</p>
                     <p>Puzzles Completed: {puzzlesCompleted}</p>
 
-                    <input
-                        type="text"
-                        value={guess}
-                        onChange={(e) => setGuess(e.target.value)}
-                        placeholder="Your guess here"
-                        style={{ padding: '0.5rem', fontSize: '1rem', width: '200px', marginBottom: '1rem' }}
-                        disabled={timeLeft <= 0 || gameOver || puzzleSolved}
-                    />
-                    <br />
-                    <button onClick={handleSubmit} disabled={timeLeft <= 0 || gameOver || puzzleSolved} style={{ padding: '0.5rem 1rem', fontSize: '1rem' }}>
-                        Submit
-                    </button>
+                    {isDesktop && (
+                        <div style={{
+                            display: 'inline-block',
+                            marginBottom: '1rem',
+                            border: '1px solid #333',
+                            padding: '15px',
+                            paddingRight: '20px',
+                            borderRadius: '5px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: `repeat(${numCols}, ${cellSize}px)`,
+                                gap: `${gapSize}px`,
+                                width: `${gridWidth}px`,
+                                margin: '0 auto'
+                            }}>
+                                {gridGuess.map((row, r) => 
+                                    row.map((letter, c) => (
+                                        <input
+                                            key={`${r}-${c}`}
+                                            type="text"
+                                            value={letter}
+                                            onChange={(e) => handleGridChange(r, c, e.target.value)}
+                                            style={{
+                                                width: `${cellSize}px`,
+                                                height: `${cellSize}px`,
+                                                textAlign: 'center',
+                                                fontSize: '1.2rem'
+                                            }}
+                                            disabled={timeLeft <= 0 || gameOver || puzzleSolved}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{marginTop: '1rem'}}>
+                        <input
+                            type="text"
+                            value={guess}
+                            onChange={(e) => setGuess(e.target.value)}
+                            placeholder="Final Answer"
+                            style={{ padding: '0.5rem', fontSize: '1rem', width: '200px', marginBottom: '1rem' }}
+                            disabled={timeLeft <= 0 || gameOver || puzzleSolved}
+                        />
+                        <br />
+                        <button onClick={handleSubmit} disabled={timeLeft <= 0 || gameOver || puzzleSolved} style={{ padding: '0.5rem 1rem', fontSize: '1rem' }}>
+                            Submit
+                        </button>
+                    </div>
 
                     {feedback && (
                         <p style={{

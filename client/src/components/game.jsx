@@ -48,7 +48,7 @@ const wordList = [
     "CHRONOLOGY"
 ];
 
-const TOTAL_TIME = 300; // 5 minutes in seconds
+const TOTAL_TIME = 60; // 5 minutes in seconds
 
 const Game = () => {
     const [level, setLevel] = useState(0);
@@ -255,6 +255,23 @@ const Game = () => {
     const cellSize = 40;
     const gapSize = 8;
     const gridWidth = numCols > 0 ? (numCols * cellSize) + ((numCols - 1) * gapSize) : 0;
+
+    useEffect(() => {
+        if (gameOver && score > 0) {
+            fetch('http://localhost:5000/scores/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', 
+                body: JSON.stringify({ score })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Score saved:", data);
+            })
+            .catch(err => console.error(err));
+        }
+    }, [gameOver, score]);
+
 
     return (
         <div className="game-container" style={{ padding: '2rem', textAlign: 'center' }}>

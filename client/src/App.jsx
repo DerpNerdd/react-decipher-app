@@ -7,6 +7,8 @@ import Game from './components/game';
 import Profile from './components/Profile';
 import Logout from './components/Logout';
 import Leaderboard from './components/Leaderboard';
+import Tutorial from './components/Tutorial';
+import Credits from './components/Credits';
 
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
                 <Route path="/play" element={<Game />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/logout" element={<Logout />} />
+                <Route path="/tutorial" element={<Tutorial />} />
+                <Route path="/credits" element={<Credits />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
             </Routes>
         </Router>

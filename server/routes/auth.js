@@ -4,6 +4,10 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+
+const upload = multer({ dest: 'uploads/' });
 
 // Helper function to check username for profanity
 async function checkProfanity(username) {
@@ -90,7 +94,20 @@ router.get('/me', (req, res) => {
         User.findById(decoded.userId)
             .then(user => {
                 if (!user) return res.status(404).json({ error: 'User not found' });
-                res.json({ username: user.username });
+                
+                // Return all desired fields
+                res.json({ 
+                    username: user.username,
+                    levelsFinished: user.levelsFinished,
+                    highScore: user.highScore,
+                    totalRuns: user.totalRuns,
+                    profilePicture: user.profilePicture,
+                    bio: user.bio
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                res.status(500).json({ error: 'Server error' });
             });
     } catch (err) {
         console.error(err);
@@ -98,10 +115,65 @@ router.get('/me', (req, res) => {
     }
 });
 
+
 // Logout
 router.post('/logout', (req, res) => {
     res.clearCookie('token');
     res.json({ message: 'Logged out successfully' });
+});
+
+router.patch('/updateProfileWithImage', upload.single('profilePicture'), (req, res) => {
+    const { token } = req.cookies;
+    if (!token) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const { bio } = req.body;
+        const file = req.file; // multer puts the file here
+
+        if (!file && !bio) {
+          return res.status(400).json({ error: 'No updates provided' });
+        }
+
+        User.findById(decoded.userId)
+            .then(async user => {
+                if (!user) return res.status(404).json({ error: 'User not found' });
+
+                // If bio is provided, update it
+                if (typeof bio === 'string') {
+                    user.bio = bio;
+                }
+
+                // If a file is uploaded, upload it to Cloudinary
+                if (file) {
+                    try {
+                        const result = await cloudinary.uploader.upload(file.path, {
+                          folder: 'profile_pictures', // optional folder in Cloudinary
+                          transformation: [{ width: 200, height: 200, crop: 'fill' }] // optional resizing
+                        });
+                        user.profilePicture = result.secure_url;
+                    } catch (err) {
+                        console.error('Cloudinary upload error:', err);
+                        return res.status(500).json({ error: 'Image upload failed' });
+                    }
+                }
+
+                return user.save().then(updatedUser => {
+                    console.log('Updated User:', updatedUser);
+                    res.json({ message: 'Profile updated successfully', profilePicture: updatedUser.profilePicture });
+                  });
+                  
+            })
+            .catch(err => {
+                console.error(err);
+                res.status(500).json({ error: 'Server error' });
+            });
+    } catch (err) {
+        console.error(err);
+        res.status(401).json({ error: 'Invalid token' });
+    }
 });
 
 module.exports = router;

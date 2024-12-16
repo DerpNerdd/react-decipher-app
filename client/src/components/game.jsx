@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { skipPuzzle, giveHint } from './puzzleActions';
+import BackButton from './BackButton'; 
+
 
 function generateKey(numCols) {
     const arr = [...Array(numCols).keys()].map(x => x + 1);
@@ -275,6 +277,7 @@ const Game = () => {
 
     return (
         <div className="game-container" style={{ padding: '2rem', textAlign: 'center' }}>
+            <BackButton />
             {!gameOver && (
                 <>
                     <h2>Unscramble the Phrase</h2>

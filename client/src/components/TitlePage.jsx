@@ -24,7 +24,7 @@ const TitlePage = () => {
 
     return (
         <div style={{textAlign: 'center', marginTop: '2rem'}}>
-            <h1>Cipher School</h1>
+            <h1>Transcipher</h1>
             <Link to="/play"><button>Play</button></Link>
             <Link to="/leaderboard"><button>Leaderboard</button></Link>
             {!loggedIn && <Link to="/signup"><button>Sign Up</button></Link>}

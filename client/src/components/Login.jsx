@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import BackButton from './BackButton';
+
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -34,6 +36,7 @@ const Login = () => {
 
     return (
         <div style={{textAlign: 'center', marginTop: '2rem'}}>
+          <BackButton />
             <h2>Log In</h2>
             <form onSubmit={handleLogin} style={{display: 'inline-block', textAlign: 'left'}}>
                 <div>

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import BackButton from './BackButton';
+
 
 const Leaderboard = () => {
     const [scores, setScores] = useState([]);
@@ -12,6 +14,7 @@ const Leaderboard = () => {
 
     return (
         <div style={{textAlign: 'center', marginTop: '2rem'}}>
+          <BackButton />
             <h2>Leaderboard</h2>
             <table style={{margin: '0 auto', borderCollapse: 'collapse'}}>
                 <thead>

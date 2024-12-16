@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import BackButton from './BackButton';
+
 
 const Profile = () => {
     const [username, setUsername] = useState('');
@@ -24,6 +26,7 @@ const Profile = () => {
 
     return (
         <div style={{textAlign: 'center', marginTop: '2rem'}}>
+            <BackButton />
             <h2>Profile</h2>
             {message && <p>{message}</p>}
             {username && <p>Welcome, {username}!</p>}

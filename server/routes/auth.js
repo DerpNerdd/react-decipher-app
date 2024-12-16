@@ -7,13 +7,18 @@ const fetch = require('node-fetch');
 
 // Helper function to check username for profanity
 async function checkProfanity(username) {
-    const url = `https://api.apilayer.com/bad_words?censor_character=*&text=${encodeURIComponent(username)}`;
+    const url = "https://api.apilayer.com/bad_words?censor_character=*";
+    
     const response = await fetch(url, {
+        method: 'POST',
         headers: {
             'apikey': process.env.BAD_WORDS_API_KEY
-        }
+        },
+        body: username
     });
+
     const data = await response.json();
+    console.log("Bad Words API response:", data);
     return data.bad_words_total > 0;
 }
 
@@ -73,7 +78,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Verify (Profile) - protected route
+// Verify (Profile)
 router.get('/me', (req, res) => {
     const { token } = req.cookies;
     if (!token) {

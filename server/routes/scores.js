@@ -20,26 +20,49 @@ function authMiddleware(req, res, next) {
     }
 }
 
-// Save Score (Authenticated)
-router.post('/save', authMiddleware, async (req, res) => {
-    const { score } = req.body;
-    if (typeof score !== 'number') {
-        return res.status(400).json({ error: 'Invalid score' });
-    }
+router.post('/startGame', authMiddleware, async (req, res) => {
+try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    try {
-        const user = await User.findById(req.userId);
-        if (!user) return res.status(404).json({ error: 'User not found' });
+    user.totalRuns += 1;
+    await user.save();
 
-        const newScore = new Score({ username: user.username, score });
-        await newScore.save();
-
-        res.status(201).json({ message: 'Score saved successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
+    res.json({ message: 'Run started, totalRuns incremented' });
+} catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+}
 });
+
+
+router.post('/save', authMiddleware, async (req, res) => {
+const { score, puzzlesCompleted } = req.body;
+try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Update user stats
+    user.totalRuns += 1;
+    if (score > user.highScore) user.highScore = score;
+    user.levelsFinished += (puzzlesCompleted || 0);
+    await user.save();
+
+    // Also save this score to the Score collection for the leaderboard
+    const newScore = new Score({
+    username: user.username,
+    score: score,
+    date: new Date()
+    });
+    await newScore.save();
+
+    res.json({ message: 'Score and stats updated successfully' });
+} catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+}
+});
+
 
 // Leaderboard
 // Get top 10 scores

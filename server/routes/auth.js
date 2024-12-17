@@ -4,10 +4,11 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
-const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const memoryStorage = multer.memoryStorage();
+const upload = multer({ storage: memoryStorage });
 
-const upload = multer({ dest: 'uploads/' });
 
 // Helper function to check username for profanity
 async function checkProfanity(username) {
@@ -131,8 +132,8 @@ router.patch('/updateProfileWithImage', upload.single('profilePicture'), (req, r
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const { bio } = req.body;
-        const file = req.file; // multer puts the file here
-
+        const file = req.file; 
+        
         if (!file && !bio) {
           return res.status(400).json({ error: 'No updates provided' });
         }
@@ -146,13 +147,22 @@ router.patch('/updateProfileWithImage', upload.single('profilePicture'), (req, r
                     user.bio = bio;
                 }
 
-                // If a file is uploaded, upload it to Cloudinary
+                // If a file is uploaded, upload it to Cloudinary using upload_stream
                 if (file) {
+                    const buffer = file.buffer;
+                    const cloudUpload = () => new Promise((resolve, reject) => {
+                        const stream = cloudinary.uploader.upload_stream(
+                          { folder: 'profile_pictures', transformation: [{ width: 200, height: 200, crop: 'fill' }] },
+                          (error, result) => {
+                            if (error) return reject(error);
+                            resolve(result);
+                          }
+                        );
+                        stream.end(buffer);
+                    });
+
                     try {
-                        const result = await cloudinary.uploader.upload(file.path, {
-                          folder: 'profile_pictures', // optional folder in Cloudinary
-                          transformation: [{ width: 200, height: 200, crop: 'fill' }] // optional resizing
-                        });
+                        const result = await cloudUpload();
                         user.profilePicture = result.secure_url;
                     } catch (err) {
                         console.error('Cloudinary upload error:', err);
@@ -161,10 +171,8 @@ router.patch('/updateProfileWithImage', upload.single('profilePicture'), (req, r
                 }
 
                 return user.save().then(updatedUser => {
-                    console.log('Updated User:', updatedUser);
                     res.json({ message: 'Profile updated successfully', profilePicture: updatedUser.profilePicture });
-                  });
-                  
+                });
             })
             .catch(err => {
                 console.error(err);
@@ -175,5 +183,6 @@ router.patch('/updateProfileWithImage', upload.single('profilePicture'), (req, r
         res.status(401).json({ error: 'Invalid token' });
     }
 });
+
 
 module.exports = router;

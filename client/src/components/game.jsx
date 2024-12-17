@@ -264,7 +264,7 @@ const Game = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include', 
-                body: JSON.stringify({ score })
+                body: JSON.stringify({ score, puzzlesCompleted })
             })
             .then(res => res.json())
             .then(data => {

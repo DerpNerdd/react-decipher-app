@@ -14,7 +14,7 @@ app.use(cors({
   origin: 'https://react-decipher-app.onrender.com/',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin']
 }));
 
 // 2. Cookie parser and JSON

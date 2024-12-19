@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
+// const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./routes/auth');
 const scoresRoutes = require('./routes/scores');
@@ -10,12 +10,18 @@ require('./config/cloudinary');
 const app = express();
 
 // 1. CORS first
-app.use(cors({
-  origin: 'https://react-decipher-app-backend.onrender.com/',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin']
-}));
+app.use((req, res, next) => {
+  const allowedOrigins = ['https://react-decipher-app.onrender.com'];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
+
 
 // 2. Cookie parser and JSON
 app.use(cookieParser());

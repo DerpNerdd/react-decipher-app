@@ -72,9 +72,11 @@ router.post('/login', async (req, res) => {
         // Set token in an HTTP-only cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: false, // set true in production with HTTPS
+            secure: true, // Ensure this is set to true in production
+            sameSite: 'None', // Required for cross-origin requests
             maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
+        
 
         res.json({ message: 'Login successful' });
     } catch (err) {

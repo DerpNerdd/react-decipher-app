@@ -20,7 +20,7 @@ function transpositionCipher(phrase, key) {
     let index=0;
     for (let r=0;r<numRows;r++){
         for(let c=0;c<numCols;c++){
-            grid[r][c]=index<text.length?text[index]:'';
+            grid[r][c]=(index<text.length)?text[index]:'';
             index++;
         }
     }
@@ -34,11 +34,22 @@ function transpositionCipher(phrase, key) {
     return cipher;
 }
 
-const wordList=[
-    "CAT","MOON","CLASSROOM","JAVASCRIPT","ENCIPHER","WATERFALL","TECHNOLOGY","TRANSPOSE","PLAYGROUND","CHRONOLOGY"
+const wordList = [
+    // 3-4 letter words
+    "CAT", "MOON", "DOG", "FISH", "TREE", "SUN", "STAR", "LION", "FROG", "BEAR",
+    
+    // 7-10 letter words
+    "CLASSROOM", "JAVASCRIPT", "ENCIPHER", "WATERFALL", "TECHNOLOGY", 
+    "PLAYGROUND", "TRANSPOSE", "HARMONIZE", "TRIANGLE", "MOLECULAR",
+
+    // 12-24 letter words
+    "CHRONOLOGICAL", "DECONSTRUCTIONISM", "UNCONSTITUTIONAL", 
+    "TRANSCENDENTALISM", "MICROBIOLOGICAL", "MULTIDIMENSIONAL", 
+    "PHILOSOPHICAL", "EXTRAORDINARY", "BIOINFORMATICS", 
+    "INTERDISCIPLINARY"
 ];
 
-const TOTAL_TIME=60;
+const TOTAL_TIME=300;
 
 const Game=()=>{
     const [level,setLevel]=useState(0);
@@ -46,7 +57,7 @@ const Game=()=>{
     const [originalWord,setOriginalWord]=useState('');
     const [guess,setGuess]=useState('');
     const [feedback,setFeedback]=useState('');
-    const [key,setKey]=useState([]);
+    const [keyVal,setKey]=useState([]);
     const [timeLeft,setTimeLeft]=useState(TOTAL_TIME);
     const [checkedGuess,setCheckedGuess]=useState([]); 
     const [score,setScore]=useState(0);
@@ -60,7 +71,6 @@ const Game=()=>{
     const [hintMessages,setHintMessages]=useState([]);
     const [usedHintPositions,setUsedHintPositions]=useState(new Set());
     const [spanElements,setSpanElements]=useState([]);
-
     const timerRef=useRef(null);
     const puzzleStartTimeRef=useRef(null);
 
@@ -134,10 +144,7 @@ const Game=()=>{
         for(let i=0;i<maxLen;i++){
             const originalChar=cleanedOriginal[i]||'';
             const guessChar=finalGuess[i]||' ';
-            letterFeedback.push({
-                char:guessChar,
-                correct:guessChar===originalChar
-            });
+            letterFeedback.push({char:guessChar,correct:guessChar===originalChar});
         }
         setCheckedGuess(letterFeedback);
         if(finalGuess===cleanedOriginal){
@@ -145,7 +152,7 @@ const Game=()=>{
             setPuzzleSolved(true);
             const elapsedMs=Date.now()-puzzleStartTimeRef.current;
             const elapsedSeconds=Math.floor(elapsedMs/1000);
-            const puzzleScore=calculateScoreForPuzzle(elapsedSeconds,cleanedOriginal.length,key.length);
+            const puzzleScore=calculateScoreForPuzzle(elapsedSeconds,cleanedOriginal.length,keyVal.length);
             setScore(prev=>prev+puzzleScore);
             setPuzzlesCompleted(prev=>prev+1);
             setTimeout(()=>{
@@ -225,23 +232,15 @@ const Game=()=>{
     const levelNumber=puzzlesCompleted+1;
     const timePercentage=(timeLeft/TOTAL_TIME)*100;
 
-    const handleGridChange=(r,c,value)=>{
-        const upperVal=value.toUpperCase().slice(0,1).replace(/[^A-Z]/g,''); 
-        setGridGuess(prev=>{
-            const newGrid=prev.map(row=>[...row]);
-            newGrid[r][c]=upperVal;
-            return newGrid;
-        });
-    };
-
     return(
         <div className="game-page-container">
             <div className="background-animation-game">
                 {spanElements}
             </div>
-            <a href="/" className="back-button-fixed-auth">Back</a>
 
-            <div className="vertical-time-container">
+            {/* Desktop-only layout */}
+            <a href="/" className="back-button-fixed-auth desktop-only">Back</a>
+            <div className="vertical-time-container desktop-only">
                 <div className="vertical-time-bar-container">
                     <div className="vertical-time-bar" style={{height:`${timePercentage}%`}}></div>
                 </div>
@@ -249,19 +248,16 @@ const Game=()=>{
                     <span className="vertical-time-text">{Math.floor(timeLeft/60)}:{String(timeLeft%60).padStart(2,'0')}</span>
                 </div>
             </div>
-
-            <div className="vertical-level-container">
+            <div className="vertical-level-container desktop-only">
                 <div className="vertical-level-text-container">
                     <span className="vertical-level-text">Level {levelNumber}</span>
                 </div>
             </div>
-
-            <div className="game-top-center">
-                <div className="game-key">Key: {key.join('')}</div>
+            <div className="game-top-center desktop-only">
+                <div className="game-key">Key: {keyVal.join('')}</div>
                 <div className="game-scrambled">{scrambledWord}</div>
             </div>
-
-            <div className="scratch-pad-large">
+            <div className="scratch-pad-large desktop-only">
                 <div 
                     className="scratch-pad-grid"
                     style={{gridTemplateColumns:`repeat(${numCols},50px)`,gridTemplateRows:`repeat(${numRows},50px)`}}
@@ -272,15 +268,21 @@ const Game=()=>{
                                 key={`${r}-${c}`}
                                 type="text"
                                 value={letter}
-                                onChange={(e)=>handleGridChange(r,c,e.target.value)}
+                                onChange={(e)=>{
+                                    const upperVal=e.target.value.toUpperCase().slice(0,1).replace(/[^A-Z]/g,'');
+                                    setGridGuess(prev=>{
+                                        const newGrid=prev.map(row=>[...row]);
+                                        newGrid[r][c]=upperVal;
+                                        return newGrid;
+                                    });
+                                }}
                                 disabled={timeLeft<=0||gameOver||puzzleSolved}
                             />
                         ))
                     )}
                 </div>
             </div>
-
-            <div className="bottom-center-container">
+            <div className="bottom-center-container desktop-only">
                 {feedback&&(
                     <p className={feedback.includes('Correct!')?'feedback-text correct':(feedback.includes('Time')?'feedback-text time-up':'feedback-text incorrect')}>
                         {feedback}
@@ -332,15 +334,93 @@ const Game=()=>{
                     </div>
                 )}
             </div>
-
             {!gameOver&&(
-                <div className="bottom-right-container">
+                <div className="bottom-right-container desktop-only">
                     <button onClick={handleSkip} disabled={timeLeft<=0||gameOver||puzzleSolved} className="game-button side-button big-side-button styled-side-button">Skip</button>
                     <button onClick={handleHint} disabled={timeLeft<=0||gameOver||puzzleSolved||hintsLeft<=0} className="game-button side-button big-side-button styled-side-button">Hint ({hintsLeft})</button>
                 </div>
+            )}
+
+            {/* Mobile-only layout */}
+            {/* For mobile, we replicate the layout with different classes */}
+            <div className="mobile-only-layout mobile-only">
+
+                <div className="mobile-center-container">
+                    <div className="mobile-scrambled-text">{scrambledWord}</div>
+                    <input
+                        type="text"
+                        value={guess}
+                        onChange={(e)=>setGuess(e.target.value)}
+                        placeholder="Final Answer"
+                        disabled={timeLeft<=0||gameOver||puzzleSolved}
+                        className="mobile-answer-input"
+                        style={{textAlign:'center'}}
+                    />
+                    <div className="mobile-key">Key: {keyVal.join('')}</div>
+
+                    <div className="vertical-time-container mobile-timer">
+                    <div className="vertical-time-text-container">
+                        <span className="vertical-time-text">{Math.floor(timeLeft/60)}:{String(timeLeft%60).padStart(2,'0')}</span>
+                    </div>
+                </div>
+                <div className="vertical-level-container mobile-level">
+                    <div className="vertical-level-text-container">
+                        <span className="vertical-level-text">Level {levelNumber}</span>
+                    </div>
+                </div>
+
+                    {feedback&&(
+                        <p className={feedback.includes('Correct!')?'feedback-text correct':(feedback.includes('Time')?'feedback-text time-up':'feedback-text incorrect')}>
+                            {feedback}
+                        </p>
+                    )}
+                    {checkedGuess.length>0&&feedback!=='Correct!'&&(
+                        <div className="checked-guess-container">
+                            {checkedGuess.map((item,index)=>(
+                                <span key={index} className={item.correct?'guess-letter correct-letter':'guess-letter incorrect-letter'}>
+                                    {item.char}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                    {hintMessages.length>0&&(
+                        <div className="hint-messages-container">
+                            {hintMessages.map((msg,idx)=>(
+                                <p key={idx} className="hint-message">{msg}</p>
+                            ))}
+                        </div>
+                    )}
+                    {!gameOver&&(
+                        <></> /* We do not place the check button here, it will be at bottom-right-mobile */
+                    )}
+                    {gameOver&&(
+                        <>
+                            <h2 className="game-over-title">Game Over!</h2>
+                            <p className="final-score">Total Score: {score}</p>
+                            <p className="final-completed">Puzzles Completed: {puzzlesCompleted}</p>
+                            <button onClick={playAgain} className="game-button play-again-button small-mobile-button">Play Again</button>
+                            <a href="/" className="game-button title-button small-mobile-button">Title Screen</a>
+                        </>
+                    )}
+                </div>
+            </div>
+            {!gameOver&&(
+                <>
+                    <div className="bottom-left-mobile mobile-only">
+                        <button onClick={handleSkip} disabled={timeLeft<=0||gameOver||puzzleSolved} className="mobile-game-button">Skip</button>
+                        <button onClick={handleHint} disabled={timeLeft<=0||gameOver||puzzleSolved||hintsLeft<=0} className="mobile-game-button">Hint ({hintsLeft})</button>
+                        <a href="/" className="mobile-game-button">Back</a>
+                    </div>
+                    <div className="bottom-right-mobile mobile-only">
+                        <button onClick={handleSubmit} disabled={timeLeft<=0||gameOver||puzzleSolved} className="mobile-game-button">
+                            Check
+                        </button>
+                    </div>
+                </>
             )}
         </div>
     );
 };
 
 export default Game;
+

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import '../Profile.css';
+
 
 const Profile = () => {
     const [username, setUsername] = useState('');
@@ -11,6 +13,8 @@ const Profile = () => {
     const [editMode, setEditMode] = useState(false);
     const [tempBio, setTempBio] = useState('');
     const [tempFile, setTempFile] = useState(null); // file object
+    const [spanElements, setSpanElements] = useState([]);
+    
 
     useEffect(() => {
         fetch('http://localhost:5000/auth/me', {
@@ -29,6 +33,13 @@ const Profile = () => {
             console.error(err);
             setMessage('You must be logged in to see your profile.');
         });
+
+        const totalSquares = 200; 
+        const arr = [];
+        for (let i = 0; i < totalSquares; i++) {
+            arr.push(<span key={i}></span>);
+        }
+        setSpanElements(arr);
     }, []);
 
     const handleSave = () => {
@@ -60,47 +71,59 @@ const Profile = () => {
     };
 
     return (
-        <div style={{textAlign: 'center', marginTop: '2rem'}}>
-            <div style={{ textAlign: 'left', margin: '1rem' }}>
-                <a href="/"><button style={{ padding: '0.5rem 1rem' }}>Back</button></a>
+        <div className="profile-container">
+            <div className="background-animation">
+                {spanElements}
             </div>
-            <h2>Profile</h2>
-            {message && <p>{message}</p>}
-            {!message && (
-                <>
-                    {profilePicture && <img src={profilePicture} alt="Profile" style={{ width: '100px', height: '100px', borderRadius: '50%' }} />}
-                    <p><strong>Username:</strong> {username}</p>
-                    <p><strong>Levels Finished:</strong> {levelsFinished}</p>
-                    <p><strong>High Score:</strong> {highScore}</p>
-                    <p><strong>Total Runs:</strong> {totalRuns}</p>
-                    <p><strong>Bio:</strong> {bio}</p>
-
+            <div style={{ textAlign: 'left', margin: '1rem' }}>
+            <a href="/" className="back-button-fixed-auth">Back</a>
+            </div>
+            <div className="profile-content">
+                <div className="profile-left">
+                    <div className="username">{username}</div>
+                    <div className="stats">
+                        <p>Levels Finished: {levelsFinished}</p>
+                        <p>High Score: {highScore}</p>
+                        <p>Total Runs: {totalRuns}</p>
+                    </div>
+                </div>
+                <div className="profile-right">
+                    {profilePicture && (
+                        <img
+                            src={profilePicture}
+                            alt="Profile"
+                            className="profile-picture"
+                        />
+                    )}
+                    <div className="bio">{bio}</div>
                     {!editMode && (
-                        <button onClick={() => {
-                            setTempBio(bio);
-                            setTempFile(null);
-                            setEditMode(true);
-                        }}>
+                        <button
+                            className="edit-button"
+                            onClick={() => {
+                                setTempBio(bio);
+                                setTempFile(null);
+                                setEditMode(true);
+                            }}
+                        >
                             Edit Profile
                         </button>
                     )}
-
                     {editMode && (
-                        <div style={{marginTop: '1rem'}}>
-                            <div>
-                                <label>Profile Picture:</label><br />
-                                <input type="file" onChange={(e) => setTempFile(e.target.files[0])} />
-                            </div>
-                            <div style={{marginTop: '1rem'}}>
-                                <label>Bio:</label><br />
-                                <textarea value={tempBio} onChange={(e) => setTempBio(e.target.value)} style={{width: '200px', height: '80px'}}/>
-                            </div>
-                            <button onClick={handleSave} style={{marginTop: '1rem', marginRight: '5px'}}>Save</button>
+                        <div className="edit-form">
+                            <input
+                                type="file"
+                                onChange={(e) => setTempFile(e.target.files[0])}
+                            />
+                            <textarea
+                                value={tempBio}
+                                onChange={(e) => setTempBio(e.target.value)}
+                            />
+                            <button onClick={handleSave}>Save</button>
                             <button onClick={() => setEditMode(false)}>Cancel</button>
                         </div>
                     )}
-                </>
-            )}
+                </div>
+            </div>
         </div>
     );
 };

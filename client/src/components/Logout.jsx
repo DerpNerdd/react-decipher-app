@@ -6,7 +6,7 @@ const Logout = () => {
 
     useEffect(() => {
         // Call the logout endpoint
-        fetch('http://localhost:5000/auth/logout', {
+        fetch('https://react-decipher-app-backend.onrender.com/auth/logout', {
             method: 'POST',
             credentials: 'include'
         }).then(res => res.json())

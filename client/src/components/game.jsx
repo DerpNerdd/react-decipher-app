@@ -217,7 +217,7 @@ const Game=()=>{
 
     useEffect(()=>{
         if(gameOver&&score>0){
-            fetch('http://localhost:5000/scores/save',{
+            fetch('https://react-decipher-app-backend.onrender.com/scores/save',{
                 method:'POST',
                 headers:{'Content-Type':'application/json'},
                 credentials:'include',

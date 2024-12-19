@@ -7,7 +7,7 @@ const TitlePage = () => {
     const [spanElements, setSpanElements] = useState([]);
 
     useEffect(() => {
-        fetch('http://localhost:5000/auth/me', {
+        fetch('https://react-decipher-app-backend.onrender.com/auth/me', {
             credentials: 'include'
         })
         .then(res => {

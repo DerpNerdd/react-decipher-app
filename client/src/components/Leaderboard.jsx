@@ -7,7 +7,7 @@ const Leaderboard = () => {
     const [spanElements, setSpanElements] = useState([]);
 
     useEffect(() => {
-        fetch('http://localhost:5000/scores/leaderboard')
+        fetch('https://react-decipher-app-backend.onrender.com/scores/leaderboard')
         .then(res => res.json())
         .then(data => {
             setScores(data);

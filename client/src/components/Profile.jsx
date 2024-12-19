@@ -17,7 +17,7 @@ const Profile = () => {
     
 
     useEffect(() => {
-        fetch('http://localhost:5000/auth/me', {
+        fetch('https://react-decipher-app-backend.onrender.com/auth/me', {
             credentials: 'include'
         })
         .then(res => res.ok ? res.json() : Promise.reject())
@@ -47,7 +47,7 @@ const Profile = () => {
         if (tempFile) formData.append('profilePicture', tempFile);
         formData.append('bio', tempBio);
 
-        fetch('http://localhost:5000/auth/updateProfileWithImage', {
+        fetch('https://react-decipher-app-backend.onrender.com/auth/updateProfileWithImage', {
             method: 'PATCH',
             credentials: 'include',
             body: formData

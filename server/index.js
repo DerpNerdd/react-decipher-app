@@ -11,7 +11,7 @@ const app = express();
 
 // 1. CORS first
 app.use(cors({
-  origin: 'https://react-decipher-app.onrender.com/',
+  origin: 'https://react-decipher-app-backend.onrender.com/',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin']
